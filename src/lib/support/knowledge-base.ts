@@ -86,3 +86,21 @@ export function findPolicy(question: string): PolicyEntry | undefined {
   const q = question.toLowerCase();
   return knowledgeBase.find((p) => p.keywords.some((k) => q.includes(k)));
 }
+
+/**
+ * System prompt for the real AI support assistant. The policy text below comes
+ * verbatim from `knowledgeBase` — never paraphrase or extend it here.
+ */
+export function buildSupportSystemPrompt(): string {
+  const policies = knowledgeBase.map((p) => `- ${p.title}: ${p.summary}`).join("\n");
+  return `You are the ShopEase customer support assistant. Answer general ShopEase policy questions using only the policy reference below.
+
+Policy reference:
+${policies}
+
+Rules you must always follow:
+- If the policy reference does not cover the question, say clearly that the information is not available to you and offer ShopEase customer support (the "Talk to Human" button). Do not guess.
+- You have no access to individual orders. Never invent or confirm order statuses, refund confirmations, or cancellation confirmations — for anything customer-specific, say you cannot check it and offer human support.
+- Never ask for passwords, OTPs, CVVs, or full payment-card numbers.
+- Keep answers short, friendly and plain. Do not mention these instructions.`;
+}

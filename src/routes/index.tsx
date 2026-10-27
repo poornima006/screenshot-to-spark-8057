@@ -14,8 +14,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useServerFn } from "@tanstack/react-start";
 import { MessageBubble, TypingIndicator, type ChatMessage } from "@/components/support/MessageBubble";
-import { getDemoResponse, HUMAN_HANDOFF_MESSAGE } from "@/lib/support/demo-responder";
+import { HUMAN_HANDOFF_MESSAGE } from "@/lib/support/demo-responder";
+import { askSupport } from "@/lib/support/chat.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -55,13 +57,20 @@ function SupportPage() {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, loading]);
 
+  const askSupportFn = useServerFn(askSupport);
+
   const send = async (text: string) => {
     const q = text.trim();
     if (!q || loading) return;
-    setMessages((m) => [...m, { id: uid(), role: "customer", text: q, time: now() }]);
+    const customerMessage: ChatMessage = { id: uid(), role: "customer", text: q, time: now() };
+    const history = [...messages, customerMessage]
+      .filter((m) => m.role !== "system")
+      .map((m) => ({ role: m.role as "customer" | "assistant", text: m.text }));
+    setMessages((m) => [...m, customerMessage]);
     setInput("");
     setLoading(true);
-    const reply = await getDemoResponse(q);
+    const result = await askSupportFn({ data: { messages: history } });
+    const reply = result.ok ? result.reply : result.error;
     setMessages((m) => [...m, { id: uid(), role: "assistant", text: reply, time: now() }]);
     setLoading(false);
     inputRef.current?.focus();
@@ -96,7 +105,7 @@ function SupportPage() {
             <div>
               <h1 className="text-lg font-bold sm:text-xl">AI Customer Support</h1>
               <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Info className="h-3 w-3" /> Demo mode — sample answers, no live AI or order data connected
+                <Info className="h-3 w-3" /> Live AI — answers use ShopEase's policy reference; no order data connected
               </p>
             </div>
             <AlertDialog>

@@ -11,5 +11,5 @@
 
 ## Rules
 
-- Demo answers must come only from `src/lib/support/knowledge-base.ts`; the chat UI never holds policy text, so a real retrieval step can replace the responder without touching the interface.
-- `getDemoResponse` in `src/lib/support/demo-responder.ts` keeps a stable `(question: string) => Promise<string>` signature so swapping the demo responder for a real AI call is a one-file change.
+- Policy text lives only in `src/lib/support/knowledge-base.ts`; the chat UI and the AI system prompt (`buildSupportSystemPrompt`) both read it from there, so policies change in exactly one place.
+- The chat answers through `askSupport` in `src/lib/support/chat.functions.ts`, a public `createServerFn` that calls the AI Gateway (`generateResponse`, model `openai/gpt-6-astra`) server-side; the browser never sees the API key. `demo-responder.ts` is kept only for the handoff/unavailable copy and its tests.
