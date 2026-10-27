@@ -11,5 +11,5 @@
 
 ## Rules
 
-- Policy text lives only in `src/lib/support/knowledge-base.ts`; the chat UI and the AI system prompt (`buildSupportSystemPrompt`) both read it from there, so policies change in exactly one place.
+- Each policy lives in its own typed record under `src/lib/support/knowledge/`; `knowledge-base.ts` aggregates these records for existing consumers and the AI prompt, while FAQs reference their summaries so policy wording changes in exactly one place.
 - The chat answers through `askSupport` in `src/lib/support/chat.functions.ts`, a public `createServerFn` that calls the AI Gateway (`generateResponse`, model `openai/gpt-6-astra`) server-side; the browser never sees the API key. `demo-responder.ts` is kept only for the handoff/unavailable copy and its tests.
