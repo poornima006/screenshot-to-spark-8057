@@ -8,3 +8,8 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## Rules
+
+- Demo answers must come only from `src/lib/support/knowledge-base.ts`; the chat UI never holds policy text, so a real retrieval step can replace the responder without touching the interface.
+- `getDemoResponse` in `src/lib/support/demo-responder.ts` keeps a stable `(question: string) => Promise<string>` signature so swapping the demo responder for a real AI call is a one-file change.
