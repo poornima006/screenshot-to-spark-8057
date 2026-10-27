@@ -1,58 +1,30 @@
-/**
- * ShopEase knowledge base — the fictional company policies behind the demo answers.
- * This file is the single source of truth for demo replies. A real document store /
- * retrieval step can replace it later without touching the chat UI.
- *
- * Rules:
- * - `summary` holds the policy text verbatim; never add numbers that are not stated here.
- * - `note` is for honesty caveats only: it must never state a customer-specific
- *   order status, refund confirmation, or a policy that does not exist above.
- */
-export type PolicyTopic = "shipping" | "returns" | "refunds" | "payments" | "cancellations";
+import { shippingPolicy } from "./knowledge/shipping-policy";
+import { returnPolicy } from "./knowledge/return-policy";
+import { refundPolicy } from "./knowledge/refund-policy";
+import { paymentInformation } from "./knowledge/payment-information";
+import { cancellationPolicy } from "./knowledge/cancellation-policy";
+import { frequentlyAskedQuestions } from "./knowledge/frequently-asked-questions";
+import type { PolicyEntry } from "./knowledge/types";
 
-export interface PolicyEntry {
-  topic: PolicyTopic;
-  title: string;
-  keywords: string[];
-  summary: string;
-  note?: string;
-}
+export type { PolicyEntry, PolicyTopic, FAQEntry } from "./knowledge/types";
+export { frequentlyAskedQuestions };
 
+/** Individually addressable policy records; no policy text is duplicated here. */
 export const knowledgeBase: PolicyEntry[] = [
-  {
-    topic: "shipping",
-    title: "Shipping",
-    keywords: ["ship", "shipping", "delivery", "deliver", "dispatch"],
-    summary: "Standard delivery usually takes 3–5 business days after dispatch.",
-    note: "We can't confirm the exact delivery date for a specific order here — ShopEase customer support can check that for you.",
-  },
-  {
-    topic: "returns",
-    title: "Returns",
-    keywords: ["return", "returns", "send back", "exchange"],
-    summary: "Eligible products can be returned within 7 days of delivery if they meet the return conditions.",
-    note: "The full return conditions aren't available here — ShopEase customer support can confirm whether your item is eligible.",
-  },
-  {
-    topic: "refunds",
-    title: "Refunds",
-    keywords: ["refund", "refunds", "money back", "reimburse"],
-    summary: "Refunds are processed within 5–7 business days after the return is approved.",
-    note: "We can't confirm the status of a specific refund here — ShopEase customer support can check that for you.",
-  },
-  {
-    topic: "payments",
-    title: "Payment methods",
-    keywords: ["pay", "payment", "payments", "upi", "debit", "credit", "net banking", "bank"],
-    summary: "ShopEase accepts UPI, debit cards, credit cards and net banking.",
-  },
-  {
-    topic: "cancellations",
-    title: "Cancellations",
-    keywords: ["cancel", "cancellation", "cancelled", "cancel my order"],
-    summary: "Customers can request cancellation before dispatch. Orders already dispatched may not be eligible.",
-    note: "We can't check or cancel a specific order here — ShopEase customer support can help with that.",
-  },
+  shippingPolicy,
+  returnPolicy,
+  refundPolicy,
+  paymentInformation,
+  cancellationPolicy,
+];
+
+export const knowledgeBaseSections = [
+  ...knowledgeBase.map((policy) => ({
+    id: policy.topic,
+    title: policy.title,
+    entries: [policy],
+  })),
+  { id: "faqs", title: "Frequently Asked Questions", entries: frequentlyAskedQuestions },
 ];
 
 /**
@@ -93,10 +65,14 @@ export function findPolicy(question: string): PolicyEntry | undefined {
  */
 export function buildSupportSystemPrompt(): string {
   const policies = knowledgeBase.map((p) => `- ${p.title}: ${p.summary}`).join("\n");
+  const faqs = frequentlyAskedQuestions.map((faq) => `- ${faq.question}\n  ${faq.answer}`).join("\n");
   return `You are the ShopEase customer support assistant. Answer general ShopEase policy questions using only the policy reference below.
 
 Policy reference:
 ${policies}
+
+Frequently Asked Questions:
+${faqs}
 
 Rules you must always follow:
 - If the policy reference does not cover the question, say clearly that the information is not available to you and offer ShopEase customer support (the "Talk to Human" button). Do not guess.

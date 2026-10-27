@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getDemoResponse } from "@/lib/support/demo-responder";
-import { buildSupportSystemPrompt, findPolicy, isOrderSpecific } from "@/lib/support/knowledge-base";
+import { buildSupportSystemPrompt, findPolicy, isOrderSpecific, knowledgeBase, knowledgeBaseSections, frequentlyAskedQuestions } from "@/lib/support/knowledge-base";
 
 describe("ShopEase demo policies", () => {
   it("answers shipping with 3-5 business days after dispatch", async () => {
@@ -47,6 +47,26 @@ describe("ShopEase demo policies", () => {
     expect(isOrderSpecific("What is the status of my order?")).toBe(true);
     expect(answer).toContain("can't look up individual orders");
     expect(answer).not.toMatch(/your order has been|is shipped|is delivered|has been refunded|is approved/i);
+  });
+});
+
+describe("Structured knowledge base", () => {
+  it("provides five individually addressable policies and a separate FAQ section", () => {
+    expect(knowledgeBaseSections.map((section) => section.id)).toEqual([
+      "shipping", "returns", "refunds", "payments", "cancellations", "faqs",
+    ]);
+    for (const policy of knowledgeBase) {
+      expect(knowledgeBaseSections.find((section) => section.id === policy.topic)?.entries).toEqual([policy]);
+    }
+  });
+
+  it("keeps FAQ answers linked to their source policies", () => {
+    expect(frequentlyAskedQuestions).toHaveLength(5);
+    for (const faq of frequentlyAskedQuestions) {
+      const policy = knowledgeBase.find((entry) => entry.topic === faq.policyTopic);
+      expect(policy).toBeDefined();
+      expect(faq.answer).toBe(policy?.summary);
+    }
   });
 });
 
