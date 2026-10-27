@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getDemoResponse } from "@/lib/support/demo-responder";
-import { findPolicy, isOrderSpecific } from "@/lib/support/knowledge-base";
+import { buildSupportSystemPrompt, findPolicy, isOrderSpecific } from "@/lib/support/knowledge-base";
 
 describe("ShopEase demo policies", () => {
   it("answers shipping with 3-5 business days after dispatch", async () => {
@@ -47,5 +47,23 @@ describe("ShopEase demo policies", () => {
     expect(isOrderSpecific("What is the status of my order?")).toBe(true);
     expect(answer).toContain("can't look up individual orders");
     expect(answer).not.toMatch(/your order has been|is shipped|is delivered|has been refunded|is approved/i);
+  });
+});
+
+describe("AI system prompt", () => {
+  it("embeds every policy verbatim", () => {
+    const prompt = buildSupportSystemPrompt();
+    expect(prompt).toContain("Standard delivery usually takes 3–5 business days after dispatch.");
+    expect(prompt).toContain("Eligible products can be returned within 7 days of delivery if they meet the return conditions.");
+    expect(prompt).toContain("Refunds are processed within 5–7 business days after the return is approved.");
+    expect(prompt).toContain("ShopEase accepts UPI, debit cards, credit cards and net banking.");
+    expect(prompt).toContain("Customers can request cancellation before dispatch. Orders already dispatched may not be eligible.");
+  });
+
+  it("forbids inventing order data and requesting credentials", () => {
+    const prompt = buildSupportSystemPrompt();
+    expect(prompt).toContain("Never invent or confirm order statuses, refund confirmations, or cancellation confirmations");
+    expect(prompt).toContain("Never ask for passwords, OTPs, CVVs, or full payment-card numbers");
+    expect(prompt).toContain("Talk to Human");
   });
 });
