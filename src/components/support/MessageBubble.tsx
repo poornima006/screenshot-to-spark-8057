@@ -1,11 +1,13 @@
 import { Headset, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { PolicySource } from "@/lib/support/rag-answer";
 
 export interface ChatMessage {
   id: string;
   role: "customer" | "assistant" | "system";
   text: string;
   time: string;
+  sources?: PolicySource[];
 }
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
@@ -38,6 +40,11 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
         >
           {message.text}
         </div>
+        {!mine && message.sources && message.sources.length > 0 && (
+          <span className="mt-1 block break-words px-1 text-xs text-muted-foreground">
+            Source: {message.sources.map((source) => source.title).join(", ")}
+          </span>
+        )}
         <span className="mt-1 block px-1 text-xs text-muted-foreground">{message.time}</span>
       </div>
     </div>
