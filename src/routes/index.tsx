@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { History, Send, Trash2, UserRound, Info } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
+import { History, Send, Trash2, UserRound, Info, ChartNoAxesCombined } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,6 +18,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { MessageBubble, TypingIndicator, type ChatMessage } from "@/components/support/MessageBubble";
 import { HUMAN_HANDOFF_MESSAGE } from "@/lib/support/demo-responder";
 import { askSupport, AI_UNAVAILABLE_MESSAGE } from "@/lib/support/chat.functions";
+import { createWelcomeMessage, useSupportSession } from "@/components/support/SupportSession";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -41,15 +42,11 @@ const SUGGESTIONS = [
   "Can I cancel my order?",
 ];
 
-const WELCOME = "Hi! Welcome to ShopEase. How can I help you today?";
 const now = () => new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 const uid = () => Math.random().toString(36).slice(2);
-const welcome = (): ChatMessage => ({ id: "welcome", role: "assistant", text: WELCOME, time: "" });
 
 function SupportPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([welcome()]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { messages, setMessages, input, setInput, loading, setLoading } = useSupportSession();
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -75,9 +72,12 @@ function SupportPage() {
       setMessages((m) => [...m, {
         id: uid(), role: "assistant", text: reply, time: now(),
         sources: result.ok ? result.sources : [],
+        inReplyTo: customerMessage.id,
+        retrievedSources: result.ok ? result.retrievedSources : null,
+        assistantUnavailable: !result.ok,
       }]);
     } catch {
-      setMessages((m) => [...m, { id: uid(), role: "assistant", text: AI_UNAVAILABLE_MESSAGE, time: now() }]);
+      setMessages((m) => [...m, { id: uid(), role: "assistant", text: AI_UNAVAILABLE_MESSAGE, time: now(), inReplyTo: customerMessage.id, assistantUnavailable: true, retrievedSources: null }]);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -85,7 +85,7 @@ function SupportPage() {
   };
 
   const talkToHuman = () =>
-    setMessages((m) => [...m, { id: uid(), role: "system", text: HUMAN_HANDOFF_MESSAGE, time: now() }]);
+    setMessages((m) => [...m, { id: uid(), role: "system", text: HUMAN_HANDOFF_MESSAGE, time: now(), inReplyTo: m.findLast((message) => message.role === "customer")?.id }]);
 
   const customerQuestions = messages.filter((m) => m.role === "customer");
 
@@ -101,9 +101,14 @@ function SupportPage() {
               Shop<span className="text-primary">Ease</span>
             </span>
           </div>
+          <div className="flex items-center gap-2">
+          <Button variant="ghost" asChild className="rounded-full" size="sm">
+            <Link to="/dashboard" aria-label="Open evaluation dashboard"><ChartNoAxesCombined /><span className="hidden sm:inline">Dashboard</span></Link>
+          </Button>
           <Button variant="outline" onClick={talkToHuman} className="rounded-full">
             <UserRound /> Talk to Human
           </Button>
+          </div>
         </div>
       </header>
 
@@ -129,7 +134,7 @@ function SupportPage() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => setMessages([welcome()])}>Clear</AlertDialogAction>
+                  <AlertDialogAction onClick={() => setMessages([createWelcomeMessage()])}>Clear</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
