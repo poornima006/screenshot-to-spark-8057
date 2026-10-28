@@ -16,7 +16,7 @@ const inputSchema = z.object({
 export const AI_UNAVAILABLE_MESSAGE =
   "Sorry, I couldn't reach the support assistant just now. Please try again in a moment, or use the Talk to Human button above.";
 
-type SupportResult = { ok: true; reply: string; sources: PolicySource[] } | { ok: false; error: string };
+type SupportResult = { ok: true; reply: string; sources: PolicySource[]; retrievedSources: PolicySource[] } | { ok: false; error: string };
 
 /** Extracts the assistant text from a Responses API result. */
 function extractReply(response: unknown): string {

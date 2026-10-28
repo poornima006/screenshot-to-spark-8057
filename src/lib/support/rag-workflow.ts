@@ -10,12 +10,12 @@ export interface RetrievalRequest { instructions: string; messages: SupportTurn[
 export async function answerWithRetrieval(
   messages: SupportTurn[],
   generate: (request: RetrievalRequest) => Promise<unknown>,
-): Promise<GroundedAnswer> {
+): Promise<GroundedAnswer & { retrievedSources: GroundedAnswer["sources"] }> {
   const latest = messages.at(-1);
-  if (!latest || latest.role !== "customer") return { reply: INFORMATION_UNAVAILABLE_MESSAGE, sources: [] };
-  if (needsHumanSupport(latest.text)) return { reply: ORDER_SPECIFIC_MESSAGE, sources: [] };
+  if (!latest || latest.role !== "customer") return { reply: INFORMATION_UNAVAILABLE_MESSAGE, sources: [], retrievedSources: [] };
+  if (needsHumanSupport(latest.text)) return { reply: ORDER_SPECIFIC_MESSAGE, sources: [], retrievedSources: [] };
   const retrieved = retrievePolicySections(latest.text);
-  if (!retrieved.length) return { reply: INFORMATION_UNAVAILABLE_MESSAGE, sources: [] };
+  if (!retrieved.length) return { reply: INFORMATION_UNAVAILABLE_MESSAGE, sources: [], retrievedSources: [] };
   const selection = await generate({ instructions: buildSupportSystemPrompt(retrieved), messages });
-  return groundAnswer(selection, retrieved);
+  return { ...groundAnswer(selection, retrieved), retrievedSources: retrieved.map(({ id, title }) => ({ id, title })) };
 }

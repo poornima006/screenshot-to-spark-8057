@@ -8,6 +8,9 @@ export interface ChatMessage {
   text: string;
   time: string;
   sources?: PolicySource[];
+  inReplyTo?: string;
+  retrievedSources?: PolicySource[] | null;
+  assistantUnavailable?: boolean;
 }
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
