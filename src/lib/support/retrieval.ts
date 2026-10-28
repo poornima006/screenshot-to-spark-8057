@@ -49,7 +49,7 @@ export function retrievePolicySections(question: string): RetrievedSection[] {
     let score = terms.reduce((total, term) => total + (containsPhrase(query, term) ? 10 : 0), 0);
     const faqs = frequentlyAskedQuestions.filter((faq) => faq.policyTopic === policy.topic);
     if (faqs.some((faq) => normalizeQuery(faq.question) === query)) score += 20;
-    return { id: policy.topic, title: policy.title, summary: policy.summary, note: policy.note, score };
+    return { id: policy.topic, title: policy.title, summary: policy.summary, ...(policy.note ? { note: policy.note } : {}), score };
   }).filter((section) => section.score > 0);
 
   if (/\b(faq|faqs|frequently asked questions)\b/.test(query)) {
