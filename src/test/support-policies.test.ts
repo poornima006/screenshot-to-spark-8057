@@ -72,7 +72,7 @@ describe("Structured knowledge base", () => {
 
 describe("AI system prompt", () => {
   it("embeds every policy verbatim", () => {
-    const prompt = buildSupportSystemPrompt();
+    const prompt = buildSupportSystemPrompt(knowledgeBase.map((policy) => ({ ...policy, id: policy.topic })));
     expect(prompt).toContain("Standard delivery usually takes 3–5 business days after dispatch.");
     expect(prompt).toContain("Eligible products can be returned within 7 days of delivery if they meet the return conditions.");
     expect(prompt).toContain("Refunds are processed within 5–7 business days after the return is approved.");

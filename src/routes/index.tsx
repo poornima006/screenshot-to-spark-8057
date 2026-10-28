@@ -17,7 +17,7 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { MessageBubble, TypingIndicator, type ChatMessage } from "@/components/support/MessageBubble";
 import { HUMAN_HANDOFF_MESSAGE } from "@/lib/support/demo-responder";
-import { askSupport } from "@/lib/support/chat.functions";
+import { askSupport, AI_UNAVAILABLE_MESSAGE } from "@/lib/support/chat.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -69,11 +69,19 @@ function SupportPage() {
     setMessages((m) => [...m, customerMessage]);
     setInput("");
     setLoading(true);
-    const result = await askSupportFn({ data: { messages: history } });
-    const reply = result.ok ? result.reply : result.error;
-    setMessages((m) => [...m, { id: uid(), role: "assistant", text: reply, time: now() }]);
-    setLoading(false);
-    inputRef.current?.focus();
+    try {
+      const result = await askSupportFn({ data: { messages: history.slice(-50) } });
+      const reply = result.ok ? result.reply : result.error;
+      setMessages((m) => [...m, {
+        id: uid(), role: "assistant", text: reply, time: now(),
+        sources: result.ok ? result.sources : [],
+      }]);
+    } catch {
+      setMessages((m) => [...m, { id: uid(), role: "assistant", text: AI_UNAVAILABLE_MESSAGE, time: now() }]);
+    } finally {
+      setLoading(false);
+      inputRef.current?.focus();
+    }
   };
 
   const talkToHuman = () =>

@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { generateResponse, GatewayError } from "@lovable.dev/ai-gateway";
-import { buildSupportSystemPrompt } from "./knowledge-base";
+import { answerWithRetrieval } from "./rag-workflow";
+import type { PolicySource } from "./rag-answer";
 
 const messageSchema = z.object({
   role: z.enum(["customer", "assistant"]),
@@ -15,7 +16,7 @@ const inputSchema = z.object({
 export const AI_UNAVAILABLE_MESSAGE =
   "Sorry, I couldn't reach the support assistant just now. Please try again in a moment, or use the Talk to Human button above.";
 
-type SupportResult = { ok: true; reply: string } | { ok: false; error: string };
+type SupportResult = { ok: true; reply: string; sources: PolicySource[] } | { ok: false; error: string };
 
 /** Extracts the assistant text from a Responses API result. */
 function extractReply(response: unknown): string {
@@ -39,17 +40,36 @@ export const askSupport = createServerFn({ method: "POST" })
   .inputValidator((data) => inputSchema.parse(data))
   .handler(async ({ data }): Promise<SupportResult> => {
     try {
-      const response = await generateResponse({
-        model: "openai/gpt-6-astra",
-        instructions: buildSupportSystemPrompt(),
-        input: data.messages.map((m) => ({
-          role: m.role === "customer" ? ("user" as const) : ("assistant" as const),
-          content: m.text,
-        })),
+      const answer = await answerWithRetrieval(data.messages, async ({ instructions, messages }) => {
+        const response = await generateResponse({
+          model: "openai/gpt-6-astra",
+          instructions,
+          input: messages.map((m) => ({
+            role: m.role === "customer" ? ("user" as const) : ("assistant" as const),
+            content: m.text,
+          })),
+          text: {
+            format: {
+              type: "json_schema",
+              name: "support_source_selection",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  sourceIds: { type: "array", items: { type: "string" } },
+                  unavailable: { type: "boolean" },
+                },
+                required: ["sourceIds", "unavailable"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        const reply = extractReply(response);
+        if (!reply) throw new Error("Empty support selection");
+        return JSON.parse(reply) as unknown;
       });
-      const reply = extractReply(response);
-      if (!reply) return { ok: false, error: AI_UNAVAILABLE_MESSAGE };
-      return { ok: true, reply };
+      return { ok: true, ...answer };
     } catch (error) {
       if (error instanceof GatewayError) {
         console.error(`AI Gateway error (${error.code}): ${error.message}`);
