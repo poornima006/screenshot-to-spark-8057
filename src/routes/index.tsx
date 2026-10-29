@@ -85,7 +85,7 @@ function SupportPage() {
   };
 
   const talkToHuman = () =>
-    setMessages((m) => [...m, { id: uid(), role: "system", text: HUMAN_HANDOFF_MESSAGE, time: now(), inReplyTo: m.findLast((message) => message.role === "customer")?.id }]);
+    setMessages((m) => [...m, { id: uid(), role: "system", text: HUMAN_HANDOFF_MESSAGE, time: now(), inReplyTo: [...m].reverse().find((message) => message.role === "customer")?.id }]);
 
   const customerQuestions = messages.filter((m) => m.role === "customer");
 
