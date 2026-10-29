@@ -69,15 +69,15 @@ function SupportPage() {
     try {
       const result = await askSupportFn({ data: { messages: history.slice(-50) } });
       const reply = result.ok ? result.reply : result.error;
-      setMessages((m) => [...m, {
+      setMessages((m) => m.some((message) => message.id === customerMessage.id) ? [...m, {
         id: uid(), role: "assistant", text: reply, time: now(),
         sources: result.ok ? result.sources : [],
         inReplyTo: customerMessage.id,
         retrievedSources: result.ok ? result.retrievedSources : null,
         assistantUnavailable: !result.ok,
-      }]);
+      }] : m);
     } catch {
-      setMessages((m) => [...m, { id: uid(), role: "assistant", text: AI_UNAVAILABLE_MESSAGE, time: now(), inReplyTo: customerMessage.id, assistantUnavailable: true, retrievedSources: null }]);
+      setMessages((m) => m.some((message) => message.id === customerMessage.id) ? [...m, { id: uid(), role: "assistant", text: AI_UNAVAILABLE_MESSAGE, time: now(), inReplyTo: customerMessage.id, assistantUnavailable: true, retrievedSources: null }] : m);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
