@@ -49,6 +49,7 @@ describe("Actual pre-generation workflow", () => {
     const answer = await answerWithRetrieval([{ role: "customer", text: "When will I receive my refund?" }], generate);
     expect(generate).toHaveBeenCalledTimes(1);
     expect(answer.sources).toEqual([{ id: "refunds", title: "Refund Policy" }]);
+    expect(answer.retrievedSources).toEqual([{ id: "refunds", title: "Refund Policy" }]);
     expect(answer.reply).toContain("5–7 business days after the return is approved");
   });
 
@@ -63,6 +64,7 @@ describe("Actual pre-generation workflow", () => {
     expect(answer.sources).toEqual([]);
     expect(answer.reply).toContain("isn't available");
     expect(answer.reply).toContain("Talk to Human");
+    expect(answer.retrievedSources).toEqual([]);
   });
 
   it("bypasses generation for individual refund statuses", async () => {
@@ -80,6 +82,7 @@ describe("Actual pre-generation workflow", () => {
     expect(generate).toHaveBeenCalledTimes(1);
     expect(answer.sources).toEqual([]);
     expect(answer.reply).toContain("isn't available");
+    expect(answer.retrievedSources).toEqual([{ id: "shipping", title: "Shipping Policy" }]);
   });
 });
 

@@ -69,15 +69,15 @@ function SupportPage() {
     try {
       const result = await askSupportFn({ data: { messages: history.slice(-50) } });
       const reply = result.ok ? result.reply : result.error;
-      setMessages((m) => [...m, {
+      setMessages((m) => m.some((message) => message.id === customerMessage.id) ? [...m, {
         id: uid(), role: "assistant", text: reply, time: now(),
         sources: result.ok ? result.sources : [],
         inReplyTo: customerMessage.id,
         retrievedSources: result.ok ? result.retrievedSources : null,
         assistantUnavailable: !result.ok,
-      }]);
+      }] : m);
     } catch {
-      setMessages((m) => [...m, { id: uid(), role: "assistant", text: AI_UNAVAILABLE_MESSAGE, time: now(), inReplyTo: customerMessage.id, assistantUnavailable: true, retrievedSources: null }]);
+      setMessages((m) => m.some((message) => message.id === customerMessage.id) ? [...m, { id: uid(), role: "assistant", text: AI_UNAVAILABLE_MESSAGE, time: now(), inReplyTo: customerMessage.id, assistantUnavailable: true, retrievedSources: null }] : m);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -85,7 +85,10 @@ function SupportPage() {
   };
 
   const talkToHuman = () =>
-    setMessages((m) => [...m, { id: uid(), role: "system", text: HUMAN_HANDOFF_MESSAGE, time: now(), inReplyTo: m.findLast((message) => message.role === "customer")?.id }]);
+    setMessages((m) => {
+      const question = [...m].reverse().find((message) => message.role === "customer");
+      return [...m, { id: uid(), role: "system", text: HUMAN_HANDOFF_MESSAGE, time: now(), ...(question ? { inReplyTo: question.id } : {}) }];
+    });
 
   const customerQuestions = messages.filter((m) => m.role === "customer");
 
