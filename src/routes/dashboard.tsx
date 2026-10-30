@@ -3,6 +3,8 @@ import { ArrowLeft, ChartNoAxesCombined, MessageSquare, ShieldCheck, UserRound, 
 import { Button } from "@/components/ui/button";
 import { useSupportSession } from "@/components/support/SupportSession";
 import { calculateEvaluation } from "@/lib/support/evaluation";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { SupportTickets } from "@/components/support/SupportTickets";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [
@@ -39,15 +41,19 @@ function EvaluationDashboard() {
       <div className="space-y-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground"><Activity className="h-3 w-3" />Session-based</span>
         <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl"><ChartNoAxesCombined className="h-6 w-6 shrink-0 text-primary" />AI Evaluation Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Current conversation only. Refreshing, leaving the app or clearing the chat resets this data. No persistent analytics are stored.</p>
+         <p className="text-sm text-muted-foreground">Evaluation uses the current conversation only and resets when you refresh or clear chat. Support tickets are stored separately.</p>
       </div>
+       <Tabs defaultValue="evaluation">
+       <TabsList aria-label="Dashboard views"><TabsTrigger value="evaluation">Evaluation</TabsTrigger><TabsTrigger value="tickets">Support Tickets</TabsTrigger></TabsList>
+       <TabsContent value="tickets"><SupportTickets /></TabsContent>
+       <TabsContent value="evaluation" className="space-y-8 pt-4">
       <section aria-label="Evaluation metrics" className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 lg:grid-cols-4">
         {stats.map(({ label, value, icon: Icon }) => <div key={label} className="rounded-lg border border-border bg-card p-5 shadow-soft">
           <div className="flex items-start justify-between gap-2"><h2 className="text-sm font-medium text-muted-foreground">{label}</h2><Icon className="h-4 w-4 shrink-0 text-primary" /></div>
           <p className="mt-3 text-3xl font-bold tabular-nums">{value}</p>
         </div>)}
       </section>
-      <p className="text-xs text-muted-foreground">Context coverage = questions with a verified policy answer ÷ total questions. Pending: {metrics.pending}. Escalated means Talk to Human was requested, not that an agent connected. A grounded answer can also be escalated.</p>
+       <p className="text-xs text-muted-foreground">Context coverage = questions with a verified policy answer ÷ total questions. Pending: {metrics.pending}. Escalated means a support request was saved, not that an agent connected or was notified. A grounded answer can also be escalated.</p>
       <section aria-labelledby="sources-heading" className="border-y border-border py-6">
         <h2 id="sources-heading" className="text-lg font-bold">Policy source usage</h2>
         <p className="mt-1 text-sm text-muted-foreground">Verified sources used in answers; each source counts once per question.</p>
@@ -80,6 +86,8 @@ function EvaluationDashboard() {
           </table>
         </div>}
       </section>
+       </TabsContent>
+       </Tabs>
     </main>
   </div>;
 }
