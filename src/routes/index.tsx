@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import { History, Send, Trash2, UserRound, Info, ChartNoAxesCombined } from "lucide-react";
+import { History, Send, Trash2, Info, ChartNoAxesCombined } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useServerFn } from "@tanstack/react-start";
 import { MessageBubble, TypingIndicator, type ChatMessage } from "@/components/support/MessageBubble";
-import { HUMAN_HANDOFF_MESSAGE } from "@/lib/support/demo-responder";
+import { SupportRequestDialog } from "@/components/support/SupportRequestDialog";
 import { askSupport, AI_UNAVAILABLE_MESSAGE } from "@/lib/support/chat.functions";
 import { createWelcomeMessage, useSupportSession } from "@/components/support/SupportSession";
 
@@ -84,12 +84,6 @@ function SupportPage() {
     }
   };
 
-  const talkToHuman = () =>
-    setMessages((m) => {
-      const question = [...m].reverse().find((message) => message.role === "customer");
-      return [...m, { id: uid(), role: "system", text: HUMAN_HANDOFF_MESSAGE, time: now(), ...(question ? { inReplyTo: question.id } : {}) }];
-    });
-
   const customerQuestions = messages.filter((m) => m.role === "customer");
 
   return (
@@ -108,9 +102,7 @@ function SupportPage() {
           <Button variant="ghost" asChild className="rounded-full" size="sm">
             <Link to="/dashboard" aria-label="Open evaluation dashboard"><ChartNoAxesCombined /><span className="hidden sm:inline">Dashboard</span></Link>
           </Button>
-          <Button variant="outline" onClick={talkToHuman} className="rounded-full">
-            <UserRound /> Talk to Human
-          </Button>
+           <SupportRequestDialog />
           </div>
         </div>
       </header>
@@ -191,7 +183,7 @@ function SupportPage() {
           <h2 className="flex items-center gap-2 font-bold">
             <History className="h-4 w-4 text-primary" /> Conversation history
           </h2>
-          <p className="mt-1 text-xs text-muted-foreground">This session only — not saved after you leave.</p>
+           <p className="mt-1 text-xs text-muted-foreground">This session only. Safe context is saved only when you submit a support request.</p>
           {customerQuestions.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">Your questions will appear here.</p>
           ) : (
