@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type Dispatch, type SetStateAction, type ReactNode } from "react";
+import { createContext, useContext, useRef, useState, type Dispatch, type SetStateAction, type ReactNode } from "react";
 import type { ChatMessage } from "./MessageBubble";
 
 export const createWelcomeMessage = (): ChatMessage => ({
@@ -12,6 +12,7 @@ interface SupportSession {
   setLoading: Dispatch<SetStateAction<boolean>>;
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
+  getConversationId: () => string;
 }
 const SessionContext = createContext<SupportSession | null>(null);
 
@@ -19,7 +20,12 @@ export function SupportSessionProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([createWelcomeMessage()]);
   const [loading, setLoading] = useState(false);
   const [input, setInput] = useState("");
-  return <SessionContext.Provider value={{ messages, setMessages, loading, setLoading, input, setInput }}>{children}</SessionContext.Provider>;
+  const conversationId = useRef<string | null>(null);
+  const getConversationId = () => {
+    if (!conversationId.current) conversationId.current = crypto.randomUUID();
+    return conversationId.current;
+  };
+  return <SessionContext.Provider value={{ messages, setMessages, loading, setLoading, input, setInput, getConversationId }}>{children}</SessionContext.Provider>;
 }
 
 export function useSupportSession() {

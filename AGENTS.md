@@ -18,4 +18,5 @@
 - Support tickets use authenticated server functions and owner/staff RLS in Lovable Cloud; support_staff membership is assigned only by trusted operators, never from client metadata or automatic signup.
 - Ticket submission is idempotent per authenticated owner and request UUID; redact sensitive context client/server-side, reject sensitive form fields, and retain database safeguards against direct API bypass.
 - Only a confirmed saved ticket appends a linked escalation message; ticket data is separate from session-only evaluation and never implies human notification.
+- Conversation references are generated lazily in the session provider and survive route navigation; support drafts remount on identity changes so one account never inherits another account's form or confirmation.
 - Evaluation derives per-question metrics from explicit response links; retrieved candidates come from the RAG workflow, source usage counts verified used IDs, and failures with missing retrieval telemetry remain unknown rather than guessed.

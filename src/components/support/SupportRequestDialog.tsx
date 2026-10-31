@@ -13,8 +13,12 @@ import { useSupportSession } from "./SupportSession";
 import { useSupportAccount, SupportSignIn } from "./SupportAccount";
 
 export function SupportRequestDialog() {
-  const { messages, setMessages } = useSupportSession();
   const { userId, ready } = useSupportAccount();
+  return <SupportRequestForm key={userId ?? "signed-out"} userId={userId} ready={ready} />;
+}
+
+function SupportRequestForm({ userId, ready }: { userId: string | null; ready: boolean }) {
+  const { messages, setMessages, getConversationId } = useSupportSession();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -56,7 +60,7 @@ export function SupportRequestDialog() {
     if (saving) return;
     if (value && !open) {
       captured.current = messages;
-      if (!conversationId.current) conversationId.current = crypto.randomUUID();
+      conversationId.current = getConversationId();
       if (saved || !requestId.current) { requestId.current = crypto.randomUUID(); pendingInput.current = null; setSaved(null); setName(""); setEmail(""); setReason(""); setError(""); }
     }
     setOpen(value);

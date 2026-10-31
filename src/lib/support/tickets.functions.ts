@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { saveTicket, ticketInputSchema, statusInputSchema, canChangeTicketStatus, type SupportTicket } from "./tickets";
 
@@ -22,10 +23,7 @@ export const createSupportTicket = createServerFn({ method: "POST" })
 
 export const listSupportTickets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { page: number }) => {
-    if (!Number.isInteger(data.page) || data.page < 0 || data.page > 10000) throw new Error("Invalid page");
-    return data;
-  })
+  .inputValidator((data) => z.object({ page: z.number().int().min(0).max(10000) }).strict().parse(data))
   .handler(async ({ data, context }) => {
     const { data: staff, error: staffError } = await context.supabase.rpc("is_support_staff");
     if (staffError) return { ok: false as const, error: "Couldn’t load support tickets. Please retry." };

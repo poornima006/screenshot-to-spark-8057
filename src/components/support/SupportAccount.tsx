@@ -14,7 +14,7 @@ export function SupportAccountProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
     let changed = false;
-    void supabase.auth.getUser().then(({ data }) => { if (active && !changed) setAccount({ userId: data.user?.id ?? null, ready: true }); });
+    void supabase.auth.getUser().then(({ data }) => { if (active && !changed) setAccount({ userId: data.user?.id ?? null, ready: true }); }).catch(() => { if (active && !changed) setAccount({ userId: null, ready: true }); });
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (!["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) return;
       changed = true;
