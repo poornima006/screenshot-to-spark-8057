@@ -14,6 +14,7 @@
 - [x] Test creation, failures, privacy and status rules; verify saving and reading a real request through the UI (70 tests passed; failed-save retry, refresh persistence, anonymous denial, owner restrictions, staff workflow and mobile form checked; temporary data removed).
 
 ## Security review
-- [ ] Audit backend policies, secrets, session handling and conversation privacy; apply confirmed fixes.
-- [ ] Add and run security tests including live cross-customer access and staff restrictions.
-- [ ] Report verified results and unresolved limitations; deeper platform scan pending.
+- [x] Audit backend policies, secrets, session handling and conversation privacy; tighten grants and chat privacy.
+- [x] Add and run security tests (77 passed); live cross-owner ID/reference, anonymous, forged-owner and staff self-assignment denial verified.
+- [x] Report verified results and unresolved limitations in SECURITY_REVIEW.md; deep scan completed with public AI cost-abuse warning.
+- [ ] Complete live logout verification: authentication returns success but browser remains signed in; session-reset unit rules pass, end-to-end logout remains unresolved.
