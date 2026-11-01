@@ -12,3 +12,8 @@
 - [x] Add private persistent tickets, validation, redaction, and retry-safe creation.
 - [x] Connect the support form and private dashboard ticket view with authorized status updates.
 - [x] Test creation, failures, privacy and status rules; verify saving and reading a real request through the UI (70 tests passed; failed-save retry, refresh persistence, anonymous denial, owner restrictions, staff workflow and mobile form checked; temporary data removed).
+
+## Security review
+- [ ] Audit backend policies, secrets, session handling and conversation privacy; apply confirmed fixes.
+- [ ] Add and run security tests including live cross-customer access and staff restrictions.
+- [ ] Report verified results and unresolved limitations; deeper platform scan pending.
