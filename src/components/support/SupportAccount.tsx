@@ -22,16 +22,16 @@ export function SupportAccountProvider({ children }: { children: ReactNode }) {
       if (!["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) return;
       changed = true;
       const next = session?.user.id ?? null;
-      if (shouldResetPrivateSession(identity.current, next)) {
-        setSessionVersion((version) => version + 1);
-        void queryClient.cancelQueries(); queryClient.clear();
-      }
-      identity.current = next;
-      setAccount({ userId: next, ready: true });
-      if (event === "SIGNED_OUT") { void queryClient.cancelQueries(); queryClient.clear(); }
-      // Leave the auth client's session lock before any refetch calls getSession.
+      // All cache and React work must leave the auth client's session lock.
       setTimeout(() => {
         if (!active) return;
+        if (shouldResetPrivateSession(identity.current, next)) {
+          setSessionVersion((version) => version + 1);
+          void queryClient.cancelQueries(); queryClient.clear();
+        }
+        identity.current = next;
+        setAccount({ userId: next, ready: true });
+        if (event === "SIGNED_OUT") { void queryClient.cancelQueries(); queryClient.clear(); }
         if (event !== "SIGNED_OUT") void queryClient.invalidateQueries();
         void router.invalidate();
       }, 0);
