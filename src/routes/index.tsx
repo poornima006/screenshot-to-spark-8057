@@ -19,6 +19,7 @@ import { MessageBubble, TypingIndicator, type ChatMessage } from "@/components/s
 import { SupportRequestDialog } from "@/components/support/SupportRequestDialog";
 import { askSupport, AI_UNAVAILABLE_MESSAGE } from "@/lib/support/chat.functions";
 import { createWelcomeMessage, useSupportSession } from "@/components/support/SupportSession";
+import { preparePrivateChat, PRIVATE_INPUT_MESSAGE } from "@/lib/support/privacy";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -60,6 +61,11 @@ function SupportPage() {
     const q = text.trim();
     if (!q || loading) return;
     const customerMessage: ChatMessage = { id: uid(), role: "customer", text: q, time: now() };
+    const checked = preparePrivateChat([{ role: "customer", text: q }]);
+    if (checked.blocked || q.length > 2000) {
+      setMessages((m) => [...m, { id: uid(), role: "system", text: checked.blocked ? PRIVATE_INPUT_MESSAGE : "Please limit your question to 2,000 characters.", time: now() }]);
+      setInput(""); return;
+    }
     const history = [...messages, customerMessage]
       .filter((m) => m.role !== "system")
       .map((m) => ({ role: m.role as "customer" | "assistant", text: m.text }));
@@ -67,7 +73,7 @@ function SupportPage() {
     setInput("");
     setLoading(true);
     try {
-      const result = await askSupportFn({ data: { messages: history.slice(-50) } });
+      const result = await askSupportFn({ data: { messages: preparePrivateChat(history.slice(-50)).messages } });
       const reply = result.ok ? result.reply : result.error;
       setMessages((m) => m.some((message) => message.id === customerMessage.id) ? [...m, {
         id: uid(), role: "assistant", text: reply, time: now(),
@@ -167,6 +173,7 @@ function SupportPage() {
                 ref={inputRef}
                 autoFocus
                 value={input}
+                maxLength={2000}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Type your question here..."
                 className="h-11 rounded-full bg-card px-4"

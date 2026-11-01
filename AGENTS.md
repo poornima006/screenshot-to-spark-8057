@@ -19,4 +19,6 @@
 - Ticket submission is idempotent per authenticated owner and request UUID; redact sensitive context client/server-side, reject sensitive form fields, and retain database safeguards against direct API bypass.
 - Only a confirmed saved ticket appends a linked escalation message; ticket data is separate from session-only evaluation and never implies human notification.
 - Conversation references are generated lazily in the session provider and survive route navigation; support drafts remount on identity changes so one account never inherits another account's form or confirmation.
+- Confirmed logout or switching away from an authenticated identity remounts the entire private session and clears query caches; anonymous-to-signed-in transitions retain that visitor's own draft chat.
+- Filter credentials and payment details before client chat requests and again before AI calls; omit email addresses upstream and never log provider error bodies containing customer input.
 - Evaluation derives per-question metrics from explicit response links; retrieved candidates come from the RAG workflow, source usage counts verified used IDs, and failures with missing retrieval telemetry remain unknown rather than guessed.
