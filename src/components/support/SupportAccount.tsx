@@ -70,9 +70,10 @@ export function SupportSignOut() {
   return <div><Button variant="ghost" size="sm" disabled={busy} onClick={async () => {
     setBusy(true); setError("");
     try {
-      await queryClient.cancelQueries(); queryClient.clear();
+      await queryClient.cancelQueries();
       const result = await supabase.auth.signOut();
       if (result.error) setError("Couldn’t sign out. Please retry.");
+      else queryClient.clear();
     } catch { setError("Couldn’t sign out. Please retry."); }
     finally { setBusy(false); }
   }}><LogOut />Sign out</Button>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}</div>;
