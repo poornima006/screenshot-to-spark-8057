@@ -71,7 +71,7 @@ export function SupportSignOut() {
     setBusy(true); setError("");
     try {
       await queryClient.cancelQueries();
-      const result = await supabase.auth.signOut();
+      const result = await supabase.auth.signOut({ scope: "local" });
       if (result.error) setError("Couldn’t sign out. Please retry.");
       else queryClient.clear();
     } catch { setError("Couldn’t sign out. Please retry."); }
