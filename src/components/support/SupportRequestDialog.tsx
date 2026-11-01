@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle, Send, UserRound } from "lucide-react";
@@ -33,6 +33,8 @@ function SupportRequestForm({ userId, ready }: { userId: string | null; ready: b
   const lock = useRef(false);
   const save = useServerFn(createSupportTicket);
   const queryClient = useQueryClient();
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
 
   const submit = async () => {
     if (!userId || lock.current) return;
@@ -45,6 +47,7 @@ function SupportRequestForm({ userId, ready }: { userId: string | null; ready: b
     lock.current = true; setSaving(true); setError("");
     try {
       const result = await save({ data: parsed.data });
+      if (!active.current) return;
       if (!result.ok) { setError(result.error); return; }
       setSaved(result.ticket);
       const question = [...captured.current].reverse().find((m) => m.role === "customer");
@@ -52,8 +55,8 @@ function SupportRequestForm({ userId, ready }: { userId: string | null; ready: b
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         ...(question && current.some((m) => m.id === question.id) ? { inReplyTo: question.id } : {}) }]);
       void queryClient.invalidateQueries({ queryKey: ["support-tickets"] });
-    } catch { setError(TICKET_SAVE_ERROR); }
-    finally { lock.current = false; setSaving(false); }
+    } catch { if (active.current) setError(TICKET_SAVE_ERROR); }
+    finally { lock.current = false; if (active.current) setSaving(false); }
   };
 
   return <Dialog open={open} onOpenChange={(value) => {

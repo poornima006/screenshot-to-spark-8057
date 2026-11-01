@@ -3,6 +3,7 @@ import { z } from "zod";
 import { generateResponse, GatewayError } from "@lovable.dev/ai-gateway";
 import { answerWithRetrieval } from "./rag-workflow";
 import type { PolicySource } from "./rag-answer";
+import { preparePrivateChat, PRIVATE_INPUT_MESSAGE } from "./privacy";
 
 const messageSchema = z.object({
   role: z.enum(["customer", "assistant"]),
@@ -39,8 +40,10 @@ function extractReply(response: unknown): string {
 export const askSupport = createServerFn({ method: "POST" })
   .inputValidator((data) => inputSchema.parse(data))
   .handler(async ({ data }): Promise<SupportResult> => {
+    const privateChat = preparePrivateChat(data.messages);
+    if (privateChat.blocked) return { ok: false, error: PRIVATE_INPUT_MESSAGE };
     try {
-      const answer = await answerWithRetrieval(data.messages, async ({ instructions, messages }) => {
+      const answer = await answerWithRetrieval(privateChat.messages, async ({ instructions, messages }) => {
         const response = await generateResponse({
           model: "openai/gpt-6-astra",
           instructions,
@@ -72,9 +75,9 @@ export const askSupport = createServerFn({ method: "POST" })
       return { ok: true, ...answer };
     } catch (error) {
       if (error instanceof GatewayError) {
-        console.error(`AI Gateway error (${error.code}): ${error.message}`);
+        console.error(`AI Gateway error (${error.code})`);
       } else {
-        console.error(error);
+        console.error("Support generation failed");
       }
       return { ok: false, error: AI_UNAVAILABLE_MESSAGE };
     }
