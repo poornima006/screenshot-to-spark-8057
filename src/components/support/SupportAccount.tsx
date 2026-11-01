@@ -29,8 +29,12 @@ export function SupportAccountProvider({ children }: { children: ReactNode }) {
       identity.current = next;
       setAccount({ userId: next, ready: true });
       if (event === "SIGNED_OUT") { void queryClient.cancelQueries(); queryClient.clear(); }
-      else void queryClient.invalidateQueries();
-      void router.invalidate();
+      // Leave the auth client's session lock before any refetch calls getSession.
+      setTimeout(() => {
+        if (!active) return;
+        if (event !== "SIGNED_OUT") void queryClient.invalidateQueries();
+        void router.invalidate();
+      }, 0);
     });
     return () => { active = false; data.subscription.unsubscribe(); };
   }, [queryClient, router]);
