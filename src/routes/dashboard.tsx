@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { z } from "zod";
 import { ArrowLeft, ChartNoAxesCombined, MessageSquare, ShieldCheck, UserRound, Percent, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSupportSession } from "@/components/support/SupportSession";
@@ -15,11 +16,14 @@ export const Route = createFileRoute("/dashboard")({
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },
   ] }),
+  validateSearch: z.object({ view: z.enum(["evaluation", "tickets"]).optional() }),
   component: EvaluationDashboard,
 });
 
 function EvaluationDashboard() {
   const { messages } = useSupportSession();
+  const { view = "evaluation" } = Route.useSearch();
+  const navigate = useNavigate({ from: "/dashboard" });
   const metrics = calculateEvaluation(messages);
   const stats = [
     { label: "Total questions", value: metrics.total, icon: MessageSquare },
@@ -43,7 +47,7 @@ function EvaluationDashboard() {
         <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl"><ChartNoAxesCombined className="h-6 w-6 shrink-0 text-primary" />AI Evaluation Dashboard</h1>
          <p className="text-sm text-muted-foreground">Evaluation uses the current conversation only and resets when you refresh or clear chat. Support tickets are stored separately.</p>
       </div>
-       <Tabs defaultValue="evaluation">
+       <Tabs value={view} onValueChange={(v) => navigate({ search: { view: v as "evaluation" | "tickets" }, replace: true })}>
        <TabsList aria-label="Dashboard views"><TabsTrigger value="evaluation">Evaluation</TabsTrigger><TabsTrigger value="tickets">Support Tickets</TabsTrigger></TabsList>
        <TabsContent value="tickets"><SupportTickets /></TabsContent>
        <TabsContent value="evaluation" className="space-y-8 pt-4">

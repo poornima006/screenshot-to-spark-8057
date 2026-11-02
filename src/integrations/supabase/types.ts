@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_rate_limits: {
+        Row: {
+          blocked_until: string | null
+          bucket: string
+          last_at: string | null
+          last_hash: string | null
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          blocked_until?: string | null
+          bucket: string
+          last_at?: string | null
+          last_hash?: string | null
+          request_count?: number
+          window_start?: string
+        }
+        Update: {
+          blocked_until?: string | null
+          bucket?: string
+          last_at?: string | null
+          last_hash?: string | null
+          request_count?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
       support_staff: {
         Row: {
           user_id: string
@@ -73,6 +100,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      consume_chat_quota: {
+        Args: {
+          _bucket: string
+          _cooldown_seconds: number
+          _duplicate_seconds: number
+          _hash: string
+          _limit: number
+          _window_seconds: number
+        }
+        Returns: {
+          outcome: string
+          retry_after: number
+        }[]
+      }
       is_support_staff: { Args: never; Returns: boolean }
     }
     Enums: {
