@@ -22,6 +22,13 @@
       "when": 1793522193840,
       "tag": "0002_restrict_support_table_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793625694827,
+      "tag": "0003_chat_rate_limits",
+      "breakpoints": true
     }
   ]
 }
