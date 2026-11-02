@@ -1,6 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getRequest } from "@tanstack/react-start/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+/** Rejects tokens whose session was ended by logout, even before the token expires. */
+async function requireLiveSession(supabase: SupabaseClient) {
+  const token = getRequest().headers.get("authorization")?.slice(7) ?? "";
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user) throw new Error("Unauthorized: Session ended");
+}
 import { saveTicket, ticketInputSchema, statusInputSchema, canChangeTicketStatus, type SupportTicket } from "./tickets";
 
 const columns = "id, reference, reason, status, created_at";
@@ -8,7 +17,7 @@ const columns = "id, reference, reason, status, created_at";
 export const createSupportTicket = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => ticketInputSchema.parse(data))
-  .handler(async ({ data, context }) => saveTicket(data, context.userId, {
+  .handler(async ({ data, context }) => { await requireLiveSession(context.supabase); return saveTicket(data, context.userId, {
     find: async (userId, requestId) => {
       const result = await context.supabase.from("support_tickets").select(columns).eq("user_id", userId).eq("request_id", requestId).maybeSingle();
       if (result.error) throw new Error("Ticket lookup failed");
@@ -19,12 +28,13 @@ export const createSupportTicket = createServerFn({ method: "POST" })
       if (result.error || !result.data) throw new Error("Ticket save failed");
       return result.data as SupportTicket;
     },
-  }));
+  })); });
 
 export const listSupportTickets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ page: z.number().int().min(0).max(10000) }).strict().parse(data))
   .handler(async ({ data, context }) => {
+    await requireLiveSession(context.supabase);
     const { data: staff, error: staffError } = await context.supabase.rpc("is_support_staff");
     if (staffError) return { ok: false as const, error: "Couldn’t load support tickets. Please retry." };
     const result = await context.supabase.from("support_tickets").select(columns).order("created_at", { ascending: false }).order("id").range(data.page * 25, data.page * 25 + 25);
@@ -36,6 +46,7 @@ export const updateSupportTicket = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => statusInputSchema.parse(data))
   .handler(async ({ data, context }) => {
+    await requireLiveSession(context.supabase);
     const staff = await context.supabase.rpc("is_support_staff");
     if (staff.error || !canChangeTicketStatus(Boolean(staff.data))) return { ok: false as const, error: "Only authorized support staff can change ticket status." };
     const result = await context.supabase.from("support_tickets").update({ status: data.status }).eq("id", data.id).select("id").maybeSingle();
