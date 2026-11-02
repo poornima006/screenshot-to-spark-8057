@@ -4,6 +4,8 @@ import { generateResponse, GatewayError } from "@lovable.dev/ai-gateway";
 import { answerWithRetrieval } from "./rag-workflow";
 import type { PolicySource } from "./rag-answer";
 import { preparePrivateChat, PRIVATE_INPUT_MESSAGE } from "./privacy";
+import { getRequest } from "@tanstack/react-start/server";
+import { checkChatQuota, clientAddress } from "./rate-limit";
 
 const messageSchema = z.object({
   role: z.enum(["customer", "assistant"]),
@@ -42,6 +44,23 @@ export const askSupport = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<SupportResult> => {
     const privateChat = preparePrivateChat(data.messages);
     if (privateChat.blocked) return { ok: false, error: PRIVATE_INPUT_MESSAGE };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const request = getRequest();
+    const auth = request.headers.get("authorization") ?? "";
+    let userId: string | null = null;
+    if (auth.startsWith("Bearer ") && auth.split(".").length === 3) {
+      // Verified against the auth service, so revoked or forged tokens fall back to the anonymous limit.
+      const { data: user } = await supabaseAdmin.auth.getUser(auth.slice(7)).catch(() => ({ data: { user: null } }));
+      userId = user.user?.id ?? null;
+    }
+    const quota = await checkChatQuota({ userId, address: clientAddress(request.headers), latestMessage: data.messages.at(-1)!.text }, {
+      consume: async (a) => {
+        const { data: rows, error } = await supabaseAdmin.rpc("consume_chat_quota", { _bucket: a.bucket, _hash: a.hash, _limit: a.limit, _window_seconds: a.windowSeconds, _cooldown_seconds: a.cooldownSeconds, _duplicate_seconds: a.duplicateSeconds });
+        if (error || !rows?.[0]) throw new Error("quota");
+        return { outcome: rows[0].outcome as "allowed" | "limited" | "duplicate", retryAfter: rows[0].retry_after };
+      },
+    });
+    if (!quota.ok) return { ok: false, error: quota.error };
     try {
       const answer = await answerWithRetrieval(privateChat.messages, async ({ instructions, messages }) => {
         const response = await generateResponse({
