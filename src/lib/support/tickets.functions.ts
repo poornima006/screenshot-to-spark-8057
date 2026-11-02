@@ -28,7 +28,7 @@ export const createSupportTicket = createServerFn({ method: "POST" })
       if (result.error || !result.data) throw new Error("Ticket save failed");
       return result.data as SupportTicket;
     },
-  })); });
+  }); });
 
 export const listSupportTickets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
