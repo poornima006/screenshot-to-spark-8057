@@ -17,4 +17,5 @@
 - [x] Audit backend policies, secrets, session handling and conversation privacy; tighten grants and chat privacy.
 - [x] Add and run security tests (77 passed); live cross-owner ID/reference, anonymous, forged-owner and staff self-assignment denial verified.
 - [x] Report verified results and unresolved limitations in SECURITY_REVIEW.md; deep scan completed with public AI cost-abuse warning.
-- [ ] Complete live logout verification: authentication returns success but browser remains signed in; session-reset unit rules pass, end-to-end logout remains unresolved.
+- [x] Fix and verify logout end to end (dashboard tab reset was hiding the signed-out view).
+- [x] Add server-side AI chat rate limiting with cooldown and duplicate rejection.

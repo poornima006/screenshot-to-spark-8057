@@ -15,9 +15,16 @@
 - No private API key literal or privileged client import was found in frontend feature code. Only generated publishable configuration is browser-visible.
 - Basic platform checks reported no issues after the permission changes.
 
+## Follow-up fixes (Nov 2)
+- Logout: root cause was the private-session reset returning the dashboard to its Evaluation tab, hiding the signed-out view; the session was being cleared. The dashboard tab now persists in the URL. Verified live: sign-out removes the stored session, tickets disappear, reload stays signed out, signing in again shows tickets.
+- Ticket server functions now re-check the session with the authentication service on every call.
+- AI chat limit: server-side, 20 messages per 10 minutes per anonymous network address (hashed), 40 per signed-in account (verified token), then a 5-minute cooldown; identical message within 10 seconds is rejected. Counters live in a table only the server can reach. If the limiter is down, chat stays available.
+- 83 tests pass.
+
 ## Remaining limitations
-- The deep scan reported one warning: public support chat can trigger paid AI requests without signing in. Public chat was preserved; app-level rate limiting/abuse controls are not implemented.
-- Live logout verification remains incomplete: the authentication service returned success, but the browser did not transition to signed-out state during the check. Session-reset rules pass unit tests, but this is not a verified end-to-end logout fix.
+- After logout, the old access token was still accepted by the authentication service in a live check, so it may stay valid until it expires (about an hour). Stored session and cached data are removed from the browser.
+- Customers sharing one network address (offices, mobile carriers) share the anonymous limit; attackers rotating addresses can bypass it. Limiter outage fails open.
+- The 20-message cutoff and cooldown were tested with automated rule tests, not by sending 21 live AI messages.
 - Newly added cleanup and privacy changes were not included in the earlier deep scan snapshot; basic checks were rerun after changes.
 - Credential detection is heuristic and cannot identify every unlabeled or obfuscated secret. It is not a guarantee against all personal information being submitted.
 - Social-provider sign-in, session expiration/revocation behavior, and production bundle contents were not independently verified in this review.
