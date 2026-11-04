@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { shouldResetPrivateSession } from "@/lib/support/privacy";
+import { shouldResetPrivateSession, sessionIdFromToken } from "@/lib/support/privacy";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,6 +71,13 @@ export function SupportSignOut() {
     setBusy(true); setError("");
     try {
       await queryClient.cancelQueries();
+      // Revoke this session server-side first so a copied token stops working immediately.
+      const { data: current } = await supabase.auth.getSession();
+      const sessionId = sessionIdFromToken(current.session?.access_token);
+      if (sessionId && current.session) {
+        const revoked = await supabase.from("revoked_sessions").insert({ session_id: sessionId, user_id: current.session.user.id });
+        if (revoked.error && revoked.error.code !== "23505") { setError("Couldn’t end your session securely. Please retry."); return; }
+      }
       const result = await supabase.auth.signOut();
       if (result.error) setError("Couldn’t sign out. Please retry.");
       else queryClient.clear();

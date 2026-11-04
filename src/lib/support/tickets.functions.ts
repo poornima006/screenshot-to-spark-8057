@@ -3,12 +3,14 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getRequest } from "@tanstack/react-start/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
+import { isSessionAllowed } from "./privacy";
 
 /** Rejects tokens whose session was ended by logout, even before the token expires. */
-async function requireLiveSession(supabase: SupabaseClient) {
+async function requireLiveSession(supabase: SupabaseClient<Database>) {
   const token = getRequest().headers.get("authorization")?.slice(7) ?? "";
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data.user) throw new Error("Unauthorized: Session ended");
+  const [{ data, error }, active] = await Promise.all([supabase.auth.getUser(token), supabase.rpc("current_session_active")]);
+  if (!isSessionAllowed({ userValid: !error && Boolean(data.user), notRevoked: active.error ? null : active.data })) throw new Error("Unauthorized: Session ended");
 }
 import { saveTicket, ticketInputSchema, statusInputSchema, canChangeTicketStatus, type SupportTicket } from "./tickets";
 

@@ -51,3 +51,21 @@ describe("Logout session invalidation", () => {
     expect(shouldResetPrivateSession("customer-a", null)).toBe(true);
   });
 });
+
+import { sessionIdFromToken, isSessionAllowed } from "@/lib/support/privacy";
+const tokenWith = (payload: object) => `h.${btoa(JSON.stringify(payload)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_")}.s`;
+describe("Server-side session revocation", () => {
+  it("reads the session ID that logout revokes", () => {
+    expect(sessionIdFromToken(tokenWith({ session_id: "8cd6840f-8eec-4ea5-bfab-cb9c9f3346bb" }))).toBe("8cd6840f-8eec-4ea5-bfab-cb9c9f3346bb");
+    expect(sessionIdFromToken(tokenWith({ sub: "x" }))).toBeNull();
+    expect(sessionIdFromToken("not-a-token")).toBeNull();
+  });
+  it("rejects revoked sessions even when the token itself is still valid", () => {
+    expect(isSessionAllowed({ userValid: true, notRevoked: false })).toBe(false);
+  });
+  it("fails closed when the revocation check cannot run", () => {
+    expect(isSessionAllowed({ userValid: true, notRevoked: null })).toBe(false);
+    expect(isSessionAllowed({ userValid: false, notRevoked: true })).toBe(false);
+    expect(isSessionAllowed({ userValid: true, notRevoked: true })).toBe(true);
+  });
+});

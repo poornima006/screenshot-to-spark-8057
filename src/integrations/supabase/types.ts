@@ -41,6 +41,24 @@ export type Database = {
         }
         Relationships: []
       }
+      revoked_sessions: {
+        Row: {
+          revoked_at: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          revoked_at?: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          revoked_at?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       support_staff: {
         Row: {
           user_id: string
@@ -114,6 +132,7 @@ export type Database = {
           retry_after: number
         }[]
       }
+      current_session_active: { Args: never; Returns: boolean }
       is_support_staff: { Args: never; Returns: boolean }
     }
     Enums: {
