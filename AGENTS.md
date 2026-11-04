@@ -22,3 +22,6 @@
 - Confirmed logout or switching away from an authenticated identity remounts the entire private session and clears query caches; anonymous-to-signed-in transitions retain that visitor's own draft chat.
 - Filter credentials and payment details before client chat requests and again before AI calls; omit email addresses upstream and never log provider error bodies containing customer input.
 - Evaluation derives per-question metrics from explicit response links; retrieved candidates come from the RAG workflow, source usage counts verified used IDs, and failures with missing retrieval telemetry remain unknown rather than guessed.
+
+- Public AI chat is rate limited server-side through a service-role-only database function keyed by verified user ID or hashed client address; it fails open so limiter outages never block customers.
+- Dashboard tab state lives in the URL search so private-session remounts keep the user on the same view.
