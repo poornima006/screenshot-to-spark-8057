@@ -18,4 +18,5 @@
 - [x] Add and run security tests (77 passed); live cross-owner ID/reference, anonymous, forged-owner and staff self-assignment denial verified.
 - [x] Report verified results and unresolved limitations in SECURITY_REVIEW.md; deep scan completed with public AI cost-abuse warning.
 - [x] Fix and verify logout end to end (dashboard tab reset was hiding the signed-out view).
-- [x] Add server-side AI chat rate limiting with cooldown and duplicate rejection.
+- [x] Add server-side AI chat rate limiting with cooldown and duplicate rejection.- [x] Server-side session revocation on logout (revocation list + restrictive policies).
+- [ ] Live replay test with a real Google/Lovable sign-in (blocked: test sign-ins carry no session ID).
