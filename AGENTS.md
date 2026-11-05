@@ -25,3 +25,4 @@
 
 - Public AI chat is rate limited server-side through a service-role-only database function keyed by verified user ID or hashed client address; it fails open so limiter outages never block customers.
 - Dashboard tab state lives in the URL search so private-session remounts keep the user on the same view.
+- Logout records the token's session ID in a private revocation list before signing out; restrictive RLS and ticket server functions reject revoked sessions, while tokens without a session ID are allowed so customers are never locked out.

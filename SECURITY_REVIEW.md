@@ -22,7 +22,8 @@
 - 83 tests pass.
 
 ## Remaining limitations
-- After logout, the old access token was still accepted by the authentication service in a live check, so it may stay valid until it expires (about an hour). Stored session and cached data are removed from the browser.
+- Session revocation (Nov 4): the authentication service ends the session at logout but does not reject an already-issued access token until it expires. The app now records the session ID at logout in a private revocation list; database policies on tickets and staff membership, and the ticket server functions, reject tokens from revoked sessions. Users can only revoke their own current session (forged revocation 403, anonymous 401, list unreadable).
+- Not live-verified: test sign-ins available to the agent carry no session ID, so replaying one after logout still worked (expected). Tokens without a session ID are not blocked, so legitimate customers are never locked out. Real Google/Lovable sign-ins normally include a session ID, but the revoked-replay path was confirmed only by automated rule tests and code review.
 - Customers sharing one network address (offices, mobile carriers) share the anonymous limit; attackers rotating addresses can bypass it. Limiter outage fails open.
 - The 20-message cutoff and cooldown were tested with automated rule tests, not by sending 21 live AI messages.
 - Newly added cleanup and privacy changes were not included in the earlier deep scan snapshot; basic checks were rerun after changes.
