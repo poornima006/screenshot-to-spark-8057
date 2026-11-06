@@ -1,4 +1,23 @@
-# Welcome to your Lovable project
+# ShopEase AI Customer Support Agent
+
+A portfolio project: an AI support chat for a fictional store, ShopEase.
+
+## Features
+- **AI chat with keyword-based retrieval (RAG):** each question is matched against separate policy records (shipping, returns, refunds, payments, cancellation, FAQs) before the AI call. Only retrieved, verified sources are shown as citations. No embeddings or semantic search are used.
+- **Honest fallbacks:** unknown or order-specific questions get an "information unavailable" answer and a Talk to Human option. No order statuses are invented.
+- **Talk to Human tickets:** signed-in customers can save private support requests (Open / In Progress / Resolved). Only explicitly assigned staff can manage them.
+- **Evaluation dashboard:** session-based metrics computed from the current conversation only.
+- **Security:** server-side AI chat rate limits, sensitive-data filtering, owner/staff database policies, and session cancellation on logout. See [SECURITY_REVIEW.md](SECURITY_REVIEW.md) for verified results and known limitations, including the unverified live replay test.
+
+## Tests
+`bunx vitest run`
+
+## Note on `.env`
+The tracked `.env` contains only publishable client settings. Private keys are stored as backend secrets and are never committed.
+
+---
+
+## About Lovable
 
 This project was built with [Lovable](https://lovable.dev).
 
