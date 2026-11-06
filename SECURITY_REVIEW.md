@@ -21,6 +21,21 @@
 - AI chat limit: server-side, 20 messages per 10 minutes per anonymous network address (hashed), 40 per signed-in account (verified token), then a 5-minute cooldown; identical message within 10 seconds is rejected. Counters live in a table only the server can reach. If the limiter is down, chat stays available.
 - 83 tests pass.
 
+## Session revocation verification status (Nov 6)
+
+Verified live:
+- Cancelled-session recording works. Signing out stored the session in the private revocation list before the sign-out completed; the stored entry matched the real Google sign-out time and was the only entry in the list.
+- The database authorization check rejects cancelled sessions. The same check that guards ticket and staff access returned "not allowed" for the recorded cancelled session.
+- No authentication credentials were displayed, logged or exposed during verification.
+
+Not verified:
+- The full replay test against the support ticket functions could not be completed: the preview authentication session was not accessible to the verification tool, so no copy of a real pre-logout credential was available to resend.
+- Rejection of an old credential through the ticket functions therefore remains unverified. The database-level rejection above is verified; the ticket-function path is covered only by automated rule tests and code review.
+- Full session revocation is not marked as completely verified.
+
+Remaining risk:
+- A previously stolen credential may remain usable until it expires if it cannot be associated with a cancellable session (for example a token that carries no session ID). Such tokens are allowed by design so legitimate customers are never locked out.
+
 ## Remaining limitations
 - Session revocation (Nov 4): the authentication service ends the session at logout but does not reject an already-issued access token until it expires. The app now records the session ID at logout in a private revocation list; database policies on tickets and staff membership, and the ticket server functions, reject tokens from revoked sessions. Users can only revoke their own current session (forged revocation 403, anonymous 401, list unreadable).
 - Not live-verified: test sign-ins available to the agent carry no session ID, so replaying one after logout still worked (expected). Tokens without a session ID are not blocked, so legitimate customers are never locked out. Real Google/Lovable sign-ins normally include a session ID, but the revoked-replay path was confirmed only by automated rule tests and code review.
